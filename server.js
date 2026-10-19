@@ -216,5 +216,12 @@ app.get(['/','/catalog','/catalog/:c','/product/:id','/favorites','/cart','/prof
 app.get('/index.html',(req,res)=>res.redirect('/'));
 app.use('/uploads',express.static(UP,{maxAge:'7d'}));
 app.use(express.static(path.join(__dirname,'public'),{index:false}));
-app.use((err,req,res,next)=>res.status(err.status||500).json({error:err.status===413?'Файл слишком большой':'Ошибка сервера'}));
+app.use((err, req, res, next) => {
+  console.error('Ошибка запроса:', req.method, req.path, err);
+  res.status(err.status || 500).json({
+    error: err.status === 413
+      ? 'Файл слишком большой'
+      : 'Ошибка сервера'
+  });
+});
 app.listen(PORT,()=>console.log(`Сайт: http://localhost:${PORT}  (админ: ${ADMIN})${tx?'':'  [SMTP не настроен — коды входа печатаются здесь]'}`));

@@ -273,6 +273,29 @@ button.btn:disabled{opacity:.5;cursor:wait}
 .hid{opacity:.55}
 .hrt2 svg{fill:none;stroke:var(--bk);stroke-width:2.4}.hrt2.o svg{fill:var(--bk)}
 
+
+/* Registered users and approximate login devices. */
+.admin-view{padding-left:clamp(20px,6.8vw,64px);padding-right:clamp(20px,6.8vw,64px)}
+.admin-view>.sh{gap:14px;flex-wrap:wrap}
+.admin-view>.tabs{flex-wrap:wrap;overflow-x:visible}
+.admin-view>.tabs button{min-height:44px}
+.admin-view .sh .btn,.users-toolbar .btn,.users-pagination .btn{min-height:44px}
+.users-note,#usersList>.mu{font-size:14px;line-height:1.5}
+@media(max-width:480px){.admin-view>.tabs button{padding:10px 12px;font-size:12px;letter-spacing:.04em}}
+.users-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+.users-toolbar input{flex:1;min-width:180px;height:40px;border:1.5px solid var(--bk);padding:0 12px;font:400 14px Inter,Arial,sans-serif}
+.user-card{border:1.5px solid var(--bk);padding:18px;margin-bottom:12px;overflow-wrap:anywhere}
+.user-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.user-card h3{font:600 17px/1.4 Inter,Arial,sans-serif;text-transform:none;margin:0 0 3px;letter-spacing:0}
+.user-card p{margin:6px 0;font-size:14px}
+.user-dates{display:flex;flex-wrap:wrap;gap:8px 24px;margin:12px 0;color:#555;font-size:14px}
+.user-card details{border-top:1px solid #ddd;padding-top:10px;margin-top:12px}
+.user-card summary{cursor:pointer;font-size:14px;font-weight:600;padding:4px 0}
+.device-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid #eee;font-size:14px;flex-wrap:wrap}
+.device-row:last-child{border-bottom:0}
+.device-row .mu{font-size:14px}
+.users-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+@media(max-width:480px){.user-card{padding:14px}.user-dates{display:block}.user-dates span{display:block;margin-bottom:5px}.users-toolbar input{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -386,7 +409,7 @@ const isVid=u=>/\.(mp4|webm)$/i.test(u);
 const HEART='<svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg>';
 const BURGER='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>';
 const ls={g(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let U=null,ADMIN=false,P=window.__P||[],S=window.__S||{},cart=ls.g('lc_cart',[]),fav=ls.g('lc_fav',[]);
+let U=null,ADMIN=false,MAIL=false,P=window.__P||[],S=window.__S||{},cart=ls.g('lc_cart',[]),fav=ls.g('lc_fav',[]);
 const vis=()=>P.filter(p=>!p.hidden),byId=id=>P.find(p=>p.id===id);
 const V=()=>$('#view');
 
@@ -400,7 +423,7 @@ async function api(m,u,b){
 function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}
   e.textContent=t;e.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2800)}
 function modal(html,cls=''){closeModal();const m=document.createElement('div');m.id='mdl';
-  m.innerHTML=`<div class="mb"></div><div class="mc ${cls}" role="dialog"><button class="x" data-x aria-label="Закрыть">✕</button>${html}</div>`;
+  m.innerHTML=`<div class="mb"></div><div class="mc ${cls}" role="dialog"><button class="x" data-x aria-label="Закрыть">×</button>${html}</div>`;
   document.body.appendChild(m);document.body.style.overflow='hidden';
   m.addEventListener('click',e=>{if(e.target.closest('.mb,[data-x]'))closeModal()});return m}
 function closeModal(){const m=$('#mdl');if(m){m.remove();document.body.style.overflow=''}}
@@ -422,42 +445,46 @@ async function mergeState(){
   saveState();
 }
 async function loadMe(){
-  const r=await api('GET','/api/me');U=r.user||null;ADMIN=!!r.admin;
+  const r=await api('GET','/api/me');U=r.user||null;ADMIN=!!r.admin;MAIL=!!r.mail;
   if(ADMIN){const a=await api('GET','/api/products');if(Array.isArray(a))P=a}
   if(U)await mergeState();else badges();
 }
 
 /* ---------- вход / регистрация ---------- */
 function authModal(){
-  const m=modal(`<h3>Вход или регистрация</h3>
-  <p class="mu">Введите почту — отправим одноразовый код. Новый аккаунт создаётся автоматически. Подходит Gmail, Яндекс, Mail.ru и любая другая почта.</p>
-  <div id="a1"><input id="ae" type="email" placeholder="you@gmail.com" autocomplete="email">
-   <div class="chips">${['@gmail.com','@yandex.ru','@mail.ru'].map(d=>`<button class="chip" data-d="${d}">${d}</button>`).join('')}</div>
-   <button class="btn b w" id="asend">Получить код</button></div>
-  <div id="a2" hidden><p class="mu">Код отправлен на <b id="aem"></b>. Если письма нет — проверьте «Спам».</p>
-   <input id="ac" inputmode="numeric" maxlength="6" placeholder="Код из письма" autocomplete="one-time-code">
-   <input id="an" placeholder="Ваше имя (для нового аккаунта)" maxlength="40">
-   <button class="btn b w" id="aok">Войти</button><button class="lnk" id="aback">Ввести другую почту</button></div>
-  <div class="err" id="aerr"></div>`);
-  const err=t=>$('#aerr',m).textContent=t||'',ae=$('#ae',m);ae.focus();
-  m.addEventListener('click',e=>{const d=e.target.dataset.d;if(d){ae.value=ae.value.split('@')[0]+d;ae.focus()}});
-  const send=async()=>{
-    const b=$('#asend',m);b.disabled=true;err();
-    const r=await api('POST','/api/login',{email:ae.value});b.disabled=false;
-    if(!r.ok)return err(r.error||'Ошибка');
-    if(r.dev)toast('SMTP не настроен: код смотрите в консоли сервера');
-    $('#a1',m).hidden=true;$('#a2',m).hidden=false;$('#aem',m).textContent=ae.value.trim();$('#ac',m).focus();
-  };
-  const ok=async()=>{
-    const b=$('#aok',m);b.disabled=true;err();
-    const r=await api('POST','/api/verify',{email:ae.value,code:$('#ac',m).value,name:$('#an',m).value});b.disabled=false;
-    if(!r.ok)return err(r.error||'Ошибка');
-    closeModal();await loadMe();toast('Вы вошли');
-    if(location.pathname==='/')homeRender();else render();
-  };
-  $('#asend',m).onclick=send;$('#aok',m).onclick=ok;
-  $('#aback',m).onclick=()=>{$('#a2',m).hidden=true;$('#a1',m).hidden=false;err()};
-  ae.onkeydown=e=>{if(e.key==='Enter')send()};$('#ac',m).onkeydown=e=>{if(e.key==='Enter')ok()};
+  function open(mode,email=''){
+    const reg=mode==='register';
+    const m=modal(`<h3>${reg?'Регистрация':'Вход'}</h3>
+      <div class="chips" role="group" aria-label="Способ входа"><button type="button" class="chip ${reg?'':'on'}" id="authLogin" aria-pressed="${!reg}">Вход</button><button type="button" class="chip ${reg?'on':''}" id="authRegister" aria-pressed="${reg}">Регистрация</button></div>
+      <p class="mu">${reg?'Создайте аккаунт. Почта используется как логин — письма и коды не нужны.':'Введите почту и пароль. Код из письма не нужен.'}</p>
+      <form id="authForm" class="fm" style="display:block">
+        ${reg?'<label>Имя<input id="authName" autocomplete="name" maxlength="40" placeholder="Как к вам обращаться"></label>':''}
+        <label>Почта<input id="authEmail" type="email" autocomplete="username" maxlength="80" value="${esc(email)}" placeholder="you@example.com" required></label>
+        <label>Пароль<input id="authPassword" type="password" autocomplete="${reg?'new-password':'current-password'}" ${reg?'minlength="10"':''} maxlength="128" placeholder="${reg?'От 10 символов':'Ваш пароль'}" required></label>
+        ${reg?'<label>Повторите пароль<input id="authConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Повторите пароль" required></label>':''}
+        <div class="err" id="aerr" role="alert" aria-live="polite"></div>
+        <button type="submit" class="btn b w" id="authSubmit">${reg?'Создать аккаунт':'Войти'}</button>
+      </form>
+      <p class="mu" style="margin:14px 0 0">Восстановление пароля по почте пока недоступно.</p>`);
+    const ae=$('#authEmail',m),ap=$('#authPassword',m),error=$('#aerr',m),btn=$('#authSubmit',m);
+    $('#authLogin',m).onclick=()=>open('login',ae.value);
+    $('#authRegister',m).onclick=()=>open('register',ae.value);
+    $('#authForm',m).onsubmit=async e=>{
+      e.preventDefault();if(btn.disabled)return;error.textContent='';
+      if(reg&&ap.value!==$('#authConfirm',m).value){error.textContent='Пароли не совпадают.';$('#authConfirm',m).focus();return}
+      btn.disabled=true;btn.textContent=reg?'Создаём аккаунт…':'Входим…';
+      $('#authLogin',m).disabled=$('#authRegister',m).disabled=true;
+      const result=await api('POST',reg?'/api/register':'/api/login',{email:ae.value.trim(),password:ap.value,...(reg?{name:$('#authName',m).value}:{})});
+      btn.disabled=false;btn.textContent=reg?'Создать аккаунт':'Войти';
+      $('#authLogin',m).disabled=$('#authRegister',m).disabled=false;
+      if(!result.ok){error.textContent=result.error||'Не удалось войти. Попробуйте ещё раз.';return}
+      ap.value='';if(reg)$('#authConfirm',m).value='';
+      closeModal();await loadMe();toast(reg?'Аккаунт создан':'Вы вошли');
+      if(location.pathname==='/')homeRender();else render();
+    };
+    ae.focus();
+  }
+  open('login');
 }
 async function logout(){await api('POST','/api/logout');location.href='/'}
 
@@ -620,7 +647,7 @@ async function vProfile(){
     }else body=`<div class="fm" style="max-width:520px"><label>Имя<input id="sn" value="${esc(U.name)}" maxlength="40"></label>
       <label>Почта<input value="${esc(U.email)}" disabled></label><label>Телефон<input id="sp" value="${esc(U.phone)}" placeholder="+7 900 000-00-00" maxlength="20"></label>
       <div class="two"><label>Город<input id="sc" value="${esc(U.city)}" maxlength="60"></label><label>Адрес / пункт выдачи<input id="sa" value="${esc(U.address)}" maxlength="200"></label></div>
-      <label class="ck"><input type="checkbox" id="snf"${U.notify?' checked':''}> Присылать на почту статусы заказов</label>
+      ${MAIL?`<label class="ck"><input type="checkbox" id="snf"${U.notify?' checked':''}> Присылать на почту статусы заказов</label>`:'<input type="checkbox" id="snf" hidden><p class="mu">Почтовые уведомления отключены.</p>'}
       <div class="fl"><button class="btn b" id="ssv">Сохранить</button><button class="btn" id="slo">Выйти</button><button class="btn red" id="sdel">Удалить аккаунт</button></div><div class="err" id="serr"></div></div>`;
     $('#pb').innerHTML=body;
     $$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
@@ -647,7 +674,7 @@ async function vProfile(){
 async function vAdmin(){
   document.title='Админ-панель — Logistic Center';
   if(!ADMIN){V().innerHTML=`<div class="wrap view">${none('Доступ только для администратора.','<a class="btn b" href="/">На главную</a>')}</div>`;if(!U)authModal();return}
-  let tab=vAdmin.tab||'p',orders=[],ofil='all';
+  let tab=vAdmin.tab||'p',orders=[],ofil='all',userData=null,userQuery='',userPage=1,userRequest=0,userTimer;
   const mini=p=>thumb(p);
   const drawP=()=>`<div class="fl"><button class="btn b" id="newp">+ Добавить товар</button><span class="mu">Всего: ${P.length}</span></div>`+
     (P.length?P.slice().sort((a,b)=>a.created<b.created?1:-1).map(p=>`<div class="ar ${p.hidden?'hid':''}">${mini(p)}<div><b>${esc(p.name)}</b><div class="mu">${CATS[p.cat]}${p.sub?' · '+esc(p.sub):''} · ${money(p.price)} · ${(p.media||[]).length} медиа${p.hidden?' · скрыт':''}</div></div>
@@ -661,21 +688,47 @@ async function vAdmin(){
      ${o.note?`<div class="mu">Комментарий: ${esc(o.note)}</div>`:''}
      <div class="fl" style="margin:10px 0 0"><select data-st="${o.id}">${ST.map((s,k)=>`<option value="${k}"${o.stage===k?' selected':''}>${k+1}. ${s}</option>`).join('')}</select><button class="btn sm" data-eo="${o.id}">Править</button><button class="btn sm red" data-do="${o.id}">Удалить</button></div></div>`).join(''):none('Посылок нет.'));
   };
+  const userDate=value=>{const d=value&&new Date(value);return d&&!Number.isNaN(d.getTime())?d.toLocaleString('ru-RU',{dateStyle:'medium',timeStyle:'short'}):'Нет данных'};
+  const drawUserList=()=>{
+    if(!userData)return '<p class="mu" role="status">Загружаем пользователей…</p>';
+    if(userData.error)return `<p class="err" role="alert">${esc(userData.error)}</p>`;
+    return `<p class="mu">Найдено аккаунтов: ${userData.total}</p>`+(userData.users.length?userData.users.map(u=>`<article class="user-card">
+      <div class="user-card-head"><div><h3>${esc(u.name||'Без имени')}</h3><span>${esc(u.email)}</span></div><span class="tag">${u.isAdmin?'Администратор':'Клиент'}</span></div>
+      <div class="user-dates"><span>Регистрация: ${userDate(u.created)}</span><span>Последний вход: ${userDate(u.lastLoginAt)}</span></div>
+      ${u.devices.length?`<p><b>Последнее устройство:</b> ${esc(u.devices[0].type)} · ${esc(u.devices[0].os)} · ${esc(u.devices[0].browser)}</p>
+      <details><summary>Устройства входа (${u.devices.length})</summary>${u.devices.map(d=>`<div class="device-row"><div><b>${esc(d.type)} · ${esc(d.os)}</b><div>${esc(d.browser)}</div></div><div class="mu">Последний вход: ${userDate(d.lastLoginAt)}<br>Первый вход: ${userDate(d.firstLoginAt)}<br>Входов: ${d.loginCount}</div></div>`).join('')}</details>`:'<p class="mu">Данные об устройствах появятся после следующего входа.</p>'}
+      </article>`).join(''):none('Пользователи не найдены.'))+
+      `<div class="users-pagination"><button class="btn" id="usersPrev" ${userData.page<=1?'disabled':''}>← Назад</button><span>Страница ${userData.page} из ${userData.pages}</span><button class="btn" id="usersNext" ${userData.page>=userData.pages?'disabled':''}>Далее →</button></div>`;
+  };
+  const drawU=()=>`<p class="mu users-note">Список зарегистрированных аккаунтов. Здесь видны данные только об успешных входах, а не присутствие онлайн. Тип устройства, браузер и ОС определяются приблизительно; IP-адреса и точные модели не собираются. Сохраняются до 10 последних браузерных профилей на аккаунт.</p>
+    <div class="users-toolbar"><input id="userSearch" type="search" aria-label="Поиск пользователей по имени или почте" placeholder="Поиск по имени или почте" value="${esc(userQuery)}"><button class="btn" id="usersRefresh">Обновить</button></div><div id="usersList" aria-live="polite">${drawUserList()}</div>`;
+  const loadUsers=async()=>{
+    const request=++userRequest;
+    const r=await api('GET','/api/admin/users?q='+encodeURIComponent(userQuery)+'&page='+userPage);
+    if(request!==userRequest||tab!=='u'||!$('#usersList'))return;
+    userData=r.ok&&Array.isArray(r.users)?r:{error:r.error==='auth'?'Доступ только для администратора.':r.error||'Не удалось загрузить пользователей.'};
+    if(userData.page)userPage=userData.page;
+    $('#usersList').innerHTML=drawUserList();
+  };
   const drawS=()=>`<div class="fm" style="max-width:480px"><p class="mu">Эти контакты показываются внизу сайта.</p>
     <label>Telegram (ник)<input id="s1" value="${esc(S.tg)}" placeholder="username"></label><label>WhatsApp (номер с кодом страны)<input id="s2" value="${esc(S.wa)}" placeholder="79001234567"></label>
     <label>Телефон<input id="s3" value="${esc(S.phone)}" placeholder="+79001234567"></label><label>Почта для связи<input id="s4" value="${esc(S.email)}" placeholder="shop@example.com"></label>
     <button class="btn b" id="ssv">Сохранить</button></div>`;
   const draw=async()=>{
     if(tab==='o'&&!orders.length){const r=await api('GET','/api/orders');if(Array.isArray(r))orders=r}
-    $('#ab').innerHTML=tab==='p'?drawP():tab==='o'?drawO():drawS();
+    $('#ab').innerHTML=tab==='p'?drawP():tab==='o'?drawO():tab==='u'?drawU():drawS();
+    if(tab==='u')loadUsers();
     $$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   };
   const reload=async()=>{const r=await api('GET','/api/products');if(Array.isArray(r))P=r;const o=await api('GET','/api/orders');if(Array.isArray(o))orders=o;draw()};
-  V().innerHTML=`<div class="wrap view">${crumbs('Админ-панель')}<div class="sh"><h2>Админ-панель</h2><a class="btn" href="/profile">Мой профиль</a></div>
-   <div class="tabs"><button data-tab="p">Товары</button><button data-tab="o">Заказы и посылки</button><button data-tab="s">Контакты сайта</button></div><div id="ab"></div></div>`;
+  V().innerHTML=`<div class="wrap view admin-view">${crumbs('Админ-панель')}<div class="sh"><h2>Админ-панель</h2><a class="btn" href="/profile">Мой профиль</a></div>
+   <div class="tabs"><button data-tab="p">Товары</button><button data-tab="o">Заказы и посылки</button><button data-tab="s">Контакты сайта</button><button data-tab="u">Пользователи и устройства</button></div><div id="ab"></div></div>`;
   V().onclick=async e=>{
-    const t=e.target.closest('[data-tab],[data-ep],[data-dp],[data-eo],[data-do],#newp,#newo,#ssv');if(!t)return;
+    const t=e.target.closest('[data-tab],[data-ep],[data-dp],[data-eo],[data-do],#newp,#newo,#ssv,#usersRefresh,#usersPrev,#usersNext');if(!t)return;
     if(t.dataset.tab){tab=vAdmin.tab=t.dataset.tab;draw()}
+    else if(t.id==='usersRefresh'){loadUsers()}
+    else if(t.id==='usersPrev'){if(userPage>1){userPage--;loadUsers()}}
+    else if(t.id==='usersNext'){if(userData&&userPage<userData.pages){userPage++;loadUsers()}}
     else if(t.id==='newp')prodEditor(null,reload);
     else if(t.dataset.ep)prodEditor(byId(t.dataset.ep),reload);
     else if(t.dataset.dp){if(confirm('Удалить товар?')){await api('DELETE','/api/products/'+t.dataset.dp);reload();toast('Удалено')}}
@@ -687,6 +740,7 @@ async function vAdmin(){
       if(r.ok){S=r.settings;toast('Сохранено')}else toast(r.error||'Ошибка');
     }
   };
+  V().oninput=e=>{if(e.target.id==='userSearch'){userQuery=e.target.value;userPage=1;clearTimeout(userTimer);userTimer=setTimeout(loadUsers,250)}};
   V().onchange=async e=>{
     if(e.target.id==='of'){ofil=e.target.value;draw()}
     if(e.target.dataset.st){const r=await api('PUT','/api/orders/'+e.target.dataset.st,{stage:+e.target.value});
@@ -759,7 +813,7 @@ function go(u,replace){
 }
 function render(keep){
   closeModal();document.onkeydown=null;
-  const p=location.pathname,v=V();v.onclick=v.onchange=null;let m;
+  const p=location.pathname,v=V();v.onclick=v.onchange=v.oninput=null;let m;
   $('#home').hidden=p!=='/';v.hidden=p==='/';
   if(p==='/'){document.title='Logistic Center — вещи из Китая до вашей двери';v.innerHTML=''}
   else if(p==='/catalog'||(m=p.match(/^\/catalog\/(\w+)$/)))vCatalog(m&&CATS[m[1]]?m[1]:'all');

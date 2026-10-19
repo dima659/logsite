@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="/logo.jpg">
+<base href="/">
+<title>Logistic Center — вещи из Китая до вашей двери</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--or:#FF9900;--bk:#0F0F0F;--lt:#F0F0EC;--ph:#E3E3DC;--tx:#1a1a1a;--mu:#555;
+ color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:#fff;color:var(--tx);font:400 14px/1.5 Inter,Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,.os{font-family:Oswald,Impact,"Arial Narrow",sans-serif;text-transform:uppercase;margin:0;font-weight:700}
+.wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 clamp(20px,6.8vw,64px)}
+:focus-visible{outline:3px solid var(--bk);outline-offset:3px}
+
+/* top bar + header */
+.top{background:var(--bk);color:var(--or);text-align:center;font:500 10px/1 Oswald,sans-serif;letter-spacing:.12em;padding:11px 10px;text-transform:uppercase}
+header{background:#fff;border-bottom:1px solid #ddd}
+.hd{display:flex;align-items:center;justify-content:space-between;height:54px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font:700 19px/1 Oswald,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.ava{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--bk);background:#fff url(/logo.jpg) -32px -31px/90px 90px no-repeat;display:block}
+nav{display:flex;gap:22px;font-size:12.5px;font-weight:500}
+nav a:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--or);text-decoration-thickness:2px}
+.ic{display:flex;gap:6px}
+.ib{height:30px;min-width:30px;border:1.5px solid var(--bk);background:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.ib.cart{background:var(--bk);color:#fff;width:46px;gap:6px;display:flex;align-items:center;justify-content:center;font:600 11px Inter,sans-serif}
+.ib svg{display:block}
+
+/* hero */
+.hero{background:var(--or);padding:62px 0 52px;overflow:hidden}
+.hero .wrap{display:flex;align-items:center;justify-content:space-between;gap:30px}
+.eyebrow{font:600 9.5px/1 Oswald,sans-serif;letter-spacing:.14em;text-transform:uppercase;margin-bottom:24px}
+h1{font-size:clamp(56px,9.6vw,96px);line-height:.93;letter-spacing:.005em;margin-bottom:22px}
+h1 .ln{display:block;overflow:hidden;padding-bottom:.04em}
+h1 .ln span{display:block}
+.hero p{max-width:330px;font-size:14.5px;line-height:1.55;margin:0 0 24px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;height:38px;padding:0 20px;font:600 12px Inter,sans-serif;border:1.5px solid var(--bk);transition:transform .15s}
+.btn.b{background:var(--bk);color:#fff}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:3px 3px 0 var(--bk)}
+.card{position:relative;isolation:isolate;transform-origin:96% 4%;flex:0 0 auto;width:min(255px,42vw);aspect-ratio:255/266;background:#fff;border:1.5px solid var(--bk);box-shadow:11px 11px 0 var(--bk);transform:rotate(-3deg);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-right:6px}
+/* Closed hanging loop attached through the upper-right eyelet. */
+.card-loop{position:absolute;right:-8%;top:-12%;width:15%;height:auto;overflow:visible;pointer-events:none;z-index:1;color:var(--bk)}
+.card-loop path,.card-loop circle{vector-effect:non-scaling-stroke}
+.lg{font:700 clamp(26px,4.3vw,41px)/.95 Oswald,sans-serif;color:var(--or);display:block;letter-spacing:.01em}
+.lg.t{transform:rotate(-7deg);margin-bottom:-4px}
+.lg.u{transform:rotate(3deg);margin-top:-8px}
+.head{width:46%;display:block}
+
+.strip{background:var(--bk);color:#fff;display:flex;justify-content:center;align-items:center;gap:26px;flex-wrap:wrap;padding:14px 10px;font:600 13px/1 Oswald,sans-serif;letter-spacing:.1em}
+.strip i{font-style:normal;color:var(--or)}
+
+/* sections */
+section{padding:56px 0}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
+h2{font-size:clamp(36px,5.6vw,50px);line-height:1;letter-spacing:.005em}
+.all{font:600 11.5px Inter,sans-serif;border-bottom:2px solid var(--or);padding-bottom:2px;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.tile{display:flex;flex-direction:column;justify-content:space-between;min-height:145px;padding:16px 17px;border:1.5px solid var(--bk);transition:transform .2s,box-shadow .2s}
+.tile h3{font-size:clamp(22px,2.9vw,27px);line-height:.98}
+.tile span{font:600 11px Inter,sans-serif}
+.tile.k{background:var(--bk);color:#fff}.tile.o{background:var(--or)}.tile.l{background:var(--lt)}
+.tile:hover{transform:translate(-3px,-3px);box-shadow:5px 5px 0 var(--bk)}
+.tile.k:hover{box-shadow:5px 5px 0 var(--or)}
+#new{padding-top:34px}
+.pr{display:block}
+.ph{position:relative;aspect-ratio:195/233;background:var(--ph) repeating-linear-gradient(135deg,transparent 0 7px,rgba(0,0,0,.045) 7px 8px);border:1.5px solid var(--bk);margin-bottom:12px}
+.new{position:absolute;left:8px;top:0;background:var(--or);font:700 8px/1 Oswald,sans-serif;letter-spacing:.1em;padding:5px 7px}
+.ph em{position:absolute;left:8px;bottom:8px;font:500 8.5px Inter,sans-serif;letter-spacing:.1em;color:#555;font-style:normal;text-transform:uppercase}
+.cat{font:500 9px Inter,sans-serif;letter-spacing:.1em;color:#666;text-transform:uppercase}
+.nm{font:600 13.5px Inter,sans-serif;margin:1px 0 7px}
+.pc{font:600 15px Oswald,sans-serif}
+
+/* how */
+#how{background:var(--lt);padding:56px 0 50px}
+#how h2{margin-bottom:34px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.st{border-top:4px solid var(--bk);padding-top:6px}
+.n{font:700 38px/1.1 Oswald,sans-serif;color:var(--or);-webkit-text-stroke:1.6px var(--bk);margin-bottom:2px}
+.st h3{font-size:19px;margin-bottom:9px}
+.st p{margin:0;font-size:12px;line-height:1.55;color:var(--mu);max-width:210px}
+
+/* track */
+#track{background:var(--bk);color:#fff;padding:52px 0 42px}
+.tr{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;margin-bottom:34px}
+#track h2{color:var(--or);font-size:clamp(40px,6vw,52px);margin-bottom:10px}
+.tr p{margin:0;font-size:13px;color:#ddd;max-width:310px}
+form{display:flex;flex:0 1 415px;flex-wrap:wrap;gap:0;align-items:flex-end}
+form label{flex:0 0 100%;font:500 9.5px Inter,sans-serif;letter-spacing:.1em;color:#ccc;margin-bottom:8px;text-transform:uppercase}
+form input{flex:1;min-width:0;height:38px;background:transparent;border:1.5px solid #fff;color:#fff;padding:0 13px;font:400 13px Inter,sans-serif;border-radius:0}
+form input::placeholder{color:#777}
+form button{height:38px;background:var(--or);border:0;font:700 12px Inter,sans-serif;padding:0 22px;cursor:pointer;color:var(--bk)}
+.msg{flex:0 0 100%;font-size:12px;color:var(--or);min-height:18px;margin-top:8px}
+.ex{font:500 9.5px Inter,sans-serif;letter-spacing:.1em;color:#ccc;text-transform:uppercase;margin-bottom:8px}
+.pg{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.pg div{border-top:4px solid #333;padding-top:8px;position:relative}
+.pg div b{position:absolute;left:0;top:-4px;height:4px;width:100%;background:var(--or);transform-origin:left;transform:scaleX(0)}
+.pg h3{font-size:clamp(12px,1.9vw,16px);color:#888;letter-spacing:.02em}
+.pg small{font-size:10.5px;color:#888}
+.pg .on h3{color:#fff}.pg .on small{color:#fff}
+
+/* sizes */
+#sizes{padding:52px 0 54px}
+#sizes h2{margin-bottom:36px}
+#sizes p{max-width:420px;font-size:12.5px;color:#333;margin:0 0 20px;line-height:1.55}
+.sc{overflow-x:auto}
+table{width:100%;min-width:520px;border-collapse:collapse;border:2px solid var(--bk);font-size:12px}
+th,td{text-align:left;padding:0 14px;height:36px}
+th{background:var(--bk);color:#fff;font:600 11px Oswald,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+td{background:var(--or);font-weight:600}
+
+footer{background:#0d0d0d;color:#fff;padding:48px 0 22px}
+.ft{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;padding-bottom:30px;border-bottom:1px solid #222}
+.sq{width:136px;aspect-ratio:1;background:#fff;border:2px solid var(--or);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sq img,.card img{width:100%;height:100%;object-fit:cover;display:block}
+.cols{display:flex;gap:36px;flex-wrap:wrap}
+.cols h4{margin:0 0 11px;font:600 11px Oswald,sans-serif;letter-spacing:.12em;color:var(--or);text-transform:uppercase}
+.cols a,.cols span{display:block;font-size:12px;margin-bottom:11px}
+.cols a:hover{color:var(--or)}
+.cp{font-size:11px;color:#bbb;padding-top:16px;display:flex;justify-content:space-between;gap:12px}
+
+@media (max-width:860px){.grid{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:repeat(2,1fr);row-gap:28px}.pg{grid-template-columns:repeat(2,1fr);row-gap:16px}nav{display:none}.hero .wrap{flex-direction:column;align-items:flex-start}.card{align-self:center;margin-top:20px}}
+@media (max-width:480px){.grid,.steps{grid-template-columns:1fr 1fr}.strip{gap:12px;font-size:11px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<div class="top">Вещи из Китая · Доставка по России</div>
+<header><div class="wrap hd">
+ <a class="brand" href="/"><span class="ava"></span><span class="bt">Logistic Center</span></a>
+ <nav><a href="/catalog">Каталог</a><a href="/#new">Новинки</a><a href="/#how">Как заказать</a><a href="/#track">Отследить заказ</a><a href="/#sizes">Размеры</a><a href="/#contacts">Контакты</a></nav>
+ <div class="ic">
+  <a class="ib" href="/catalog" id="srch" aria-label="Поиск"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="2.6"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg></a>
+  <a class="ib" href="/favorites" aria-label="Избранное"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="2.6"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg><b id="favn" class="bdg" hidden></b></a>
+  <button class="ib" id="acc" aria-label="Аккаунт" title="Вход / профиль"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="2.6"><circle cx="12" cy="8" r="4.5"/><path d="M3.5 21c.8-5 4.2-7 8.5-7s7.7 2 8.5 7"/></svg></button>
+  <a class="ib cart" href="/cart" aria-label="Корзина"><svg width="13" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M3 4h3l2.5 11h10L21 7H7"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg><span id="cartn">0</span></a>
+  <button class="ib" id="burger" aria-label="Меню"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="2.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+ </div>
+</div></header>
+
+<div id="home">
+<div class="hero"><div class="wrap">
+ <div>
+  <div class="eyebrow">Магазин вещей из Китая</div>
+  <h1><span class="ln"><span>Вещи из</span></span><span class="ln"><span>Китая до</span></span><span class="ln"><span>Вашей двери</span></span></h1>
+  <p>Одежда, обувь и аксессуары по ценам китайских поставщиков. Выбираете вещь, мы выкупаем, проверяем и отправляем вам.</p>
+  <div class="btns"><a class="btn b" href="#catalog">Смотреть каталог</a><a class="btn" href="#track">Отследить заказ</a></div>
+ </div>
+ <div class="card" id="card">
+  <img src="/logo.jpg" alt="Logistic Center">
+  <svg class="card-loop" viewBox="0 0 42 52" fill="none" aria-hidden="true" focusable="false">
+   <circle cx="10" cy="43" r="6.5" fill="white" stroke="currentColor" stroke-width="1.2"/>
+   <path d="M10 43 C8 35 3 23 7 15 C11 7 20 2 27 3 C35 4 40 11 39 18 C39 25 32 29 25 34 C19 38 15 44 10 43 Z" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+ </div>
+</div></div>
+
+<div class="strip"><a href="/catalog/clothes"><span>Одежда</span></a><i>/</i><a href="/catalog/shoes"><span>Обувь</span></a><i>/</i><a href="/catalog/bags"><span>Сумки</span></a><i>/</i><a href="/catalog/accessories"><span>Аксессуары</span></a></div>
+
+<section id="catalog"><div class="wrap">
+ <div class="sh"><h2>Каталог</h2><a class="all" href="/catalog">Все товары →</a></div>
+ <div class="grid">
+  <a class="tile k" href="/catalog/clothes" data-cat="clothes"><h3>Одежда</h3><span>Смотреть →</span></a>
+  <a class="tile o" href="/catalog/shoes" data-cat="shoes"><h3>Обувь</h3><span>Смотреть →</span></a>
+  <a class="tile l" href="/catalog/bags" data-cat="bags"><h3>Сумки</h3><span>Смотреть →</span></a>
+  <a class="tile k" href="/catalog/accessories" data-cat="accessories"><h3>Аксессуары</h3><span>Смотреть →</span></a>
+ </div>
+</div></section>
+
+<section id="new"><div class="wrap">
+ <div class="sh"><h2>Новинки</h2></div>
+ <div class="grid" id="pgrid"></div>
+</div></section>
+
+<section id="how"><div class="wrap">
+ <h2>Как заказать</h2>
+ <div class="steps">
+  <div class="st"><div class="n">1</div><h3>Выбираете</h3><p>Размер, цвет и количество. Сверяйте размер с таблицей на странице товара.</p></div>
+  <div class="st"><div class="n">2</div><h3>Выкупаем</h3><p>Заказываем вещь у поставщика в Китае и проверяем её на нашем складе.</p></div>
+  <div class="st"><div class="n">3</div><h3>Отправляем</h3><p>Везём в Россию. Номер для отслеживания приходит вам в сообщении.</p></div>
+  <div class="st"><div class="n">4</div><h3>Получаете</h3><p>Забираете в пункте выдачи или принимаете у курьера. Срок: [N] дней.</p></div>
+ </div>
+</div></section>
+
+<section id="track"><div class="wrap">
+ <div class="tr">
+  <div><h2>Где мой заказ?</h2><p>Введите номер заказа и посмотрите, на каком этапе посылка.</p></div>
+  <form id="f"><label for="oid">Номер заказа</label><input id="oid" placeholder="LC-000000" autocomplete="off"><button type="submit">Отследить</button><div class="msg" id="msg" role="status"></div></form>
+ </div>
+ <div class="ex">Пример статуса заказа</div>
+ <div class="pg" id="pg">
+  <div class="on"><b></b><h3>Склад в Китае</h3><small>Готово</small></div>
+  <div class="on"><b></b><h3>Отправлен в Россию</h3><small>Сейчас здесь</small></div>
+  <div><b></b><h3>Таможня</h3><small>Ожидает</small></div>
+  <div><b></b><h3>Сортировка</h3><small>Ожидает</small></div>
+  <div><b></b><h3>Пункт выдачи</h3><small>Ожидает</small></div>
+ </div>
+</div></section>
+
+<section id="sizes"><div class="wrap">
+ <h2>Китайские размеры</h2>
+ <p>Китайские вещи маломерят: бирка L чаще всего соответствует российскому 44–46. Таблица даёт ориентир. Точные замеры смотрите на странице товара.</p>
+ <div class="sc"><table>
+  <tr><th>Бирка (Китай)</th><th>M</th><th>L</th><th>XL</th><th>2XL</th><th>3XL</th></tr>
+  <tr><td>Россия</td><td>42–44</td><td>44–46</td><td>46–48</td><td>48–50</td><td>50–52</td></tr>
+ </table></div>
+</div></section>
+
+</div>
+<div id="view" hidden></div>
+
+<footer id="contacts"><div class="wrap">
+ <div class="ft">
+  <div class="sq"><img src="/logo.jpg" alt="Logistic Center"></div>
+  <div class="cols">
+   <div><h4>Магазин</h4><a href="/catalog">Весь каталог</a><a href="/catalog/clothes">Одежда</a><a href="/catalog/shoes">Обувь</a><a href="/catalog/bags">Сумки</a><a href="/catalog/accessories">Аксессуары</a></div>
+   <div><h4>Покупателям</h4><a href="/#how">Как заказать</a><a href="/#track">Отследить заказ</a><a href="/#sizes">Размеры</a><a href="/cart">Корзина</a></div>
+   <div><h4>Связаться</h4><div id="ct"></div></div>
+  </div>
+ </div>
+ <div class="cp"><span>© 2026 Logistic Center</span></div>
+</div></footer>
+
+<!--CONTENT-->
+<script src="/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script>
+(function(){
+ var calm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function fill(st){
+  if(typeof st!=='number')st=1;
+  var d=[].slice.call(document.querySelectorAll('#pg div')),b=d.map(function(x){return x.querySelector('b')}),a=b.slice(0,st+1),z=b.slice(st+1);
+  d.forEach(function(x,i){x.classList.toggle('on',i<=st);x.querySelector('small').textContent=i<st?'Готово':i===st?(st===4?'Готово':'Сейчас здесь'):'Ожидает'});
+  if(calm||!window.anime){a.forEach(function(x){x.style.transform='scaleX(1)'});z.forEach(function(x){x.style.transform='scaleX(0)'});return}
+  anime.set(z,{scaleX:0});anime.set(a,{scaleX:0});
+  anime({targets:a,scaleX:1,duration:900,delay:anime.stagger(450),easing:'easeInOutQuart'});
+ }
+ window.__fill=fill;if(calm){fill();return}
+ /* hero: one orchestrated load sequence */
+ anime.set('h1 .ln span',{translateY:'105%'});
+ anime.set('#card',{opacity:0,rotate:-14,translateX:80});
+ anime.timeline({easing:'easeOutExpo'})
+  .add({targets:'.eyebrow,.hero p,.btns',opacity:[0,1],translateY:[14,0],duration:700,delay:anime.stagger(120)},0)
+  .add({targets:'h1 .ln span',translateY:['105%','0%'],duration:900,delay:anime.stagger(110)},100)
+  .add({targets:'#card',opacity:1,rotate:-3,translateX:0,duration:1100,easing:'easeOutElastic(1,.7)'},500)
+  .add({targets:'.strip span',opacity:[0,1],duration:500,delay:anime.stagger(70)},900);
+ /* catalog tiles + products + steps reveal once on scroll */
+ function reveal(sel,host){
+  var els=document.querySelectorAll(sel);anime.set(els,{opacity:0,translateY:24});
+  new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();
+   anime({targets:els,opacity:1,translateY:0,duration:650,delay:anime.stagger(80),easing:'easeOutCubic'})}},{threshold:.15}).observe(document.querySelector(host));
+ }
+ reveal('#catalog .tile','#catalog .grid');
+ reveal('#new .pr','#new .grid');
+ reveal('#how .st','#how .steps');
+ /* tracking progress fills when it enters view */
+ anime.set('#pg b',{scaleX:0});
+ new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();fill()}},{threshold:.4}).observe(document.getElementById('pg'));
+ window.__fill=fill;
+})();
+/* tracking form */
+document.getElementById('f').addEventListener('submit',function(e){
+ e.preventDefault();
+ var v=document.getElementById('oid').value.trim().toUpperCase(),m=document.getElementById('msg');
+ if(!/^LC-\d{6}$/.test(v)){m.textContent='Введите номер в формате LC-000000';
+  if(window.anime)anime({targets:'#oid',translateX:[0,-8,8,-5,5,0],duration:420,easing:'easeInOutSine'});return}
+ m.textContent='Ищу заказ…';
+ fetch('/api/track',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'lc'},body:JSON.stringify({id:v})})
+  .then(function(r){return r.json()}).then(function(j){
+   if(typeof j.stage!=='number'){m.textContent=j.error||'Заказ не найден. Проверьте номер.';return}
+   m.textContent='Заказ '+v+': '+document.querySelectorAll('#pg h3')[j.stage].textContent;
+   if(window.__fill)window.__fill(j.stage);
+  }).catch(function(){m.textContent='Не удалось проверить заказ. Попробуйте позже.'});
+});
+</script>
+
+<script>
+/* Gentle pendulum motion, independent of the entrance animation. */
+(function(){
+ var card=document.getElementById('card'),hero=card&&card.closest('.hero');
+ if(!card||!hero)return;
+ var reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ var fine=matchMedia('(hover: hover) and (pointer: fine)');
+ var frame=0,last=0,phase=0,angle=0,velocity=0,pointer=0,visible=true;
+ function resetPointer(){pointer=0}
+ hero.addEventListener('pointermove',function(e){
+  if(!fine.matches||e.pointerType==='touch'||reduced.matches)return;
+  var r=hero.getBoundingClientRect();
+  pointer=Math.max(-1,Math.min(1,(e.clientX-r.left)/r.width*2-1))*2.2;
+ },{passive:true});
+ hero.addEventListener('pointerleave',resetPointer);
+ hero.addEventListener('pointercancel',resetPointer);
+ window.addEventListener('blur',resetPointer);
+ function tick(now){
+  frame=0;
+  if(reduced.matches){angle=velocity=pointer=0;card.style.removeProperty('rotate');return}
+  if(!visible||document.hidden)return;
+  var dt=last?Math.min((now-last)/1000,0.032):1/60;last=now;phase+=dt;
+  var target=Math.sin(phase*2*Math.PI/4.8)*1.35+pointer;
+  velocity+=((target-angle)*22-velocity*6.5)*dt;
+  angle+=velocity*dt;
+  card.style.rotate=angle.toFixed(3)+'deg';
+  frame=requestAnimationFrame(tick);
+ }
+ function sync(){
+  cancelAnimationFrame(frame);frame=0;last=0;
+  if(reduced.matches){angle=velocity=pointer=0;card.style.removeProperty('rotate');return}
+  if(visible&&!document.hidden)frame=requestAnimationFrame(tick);
+ }
+ if('IntersectionObserver' in window)new IntersectionObserver(function(entries){
+  visible=entries[0].isIntersecting;if(!visible)resetPointer();sync();
+ }).observe(hero);
+ reduced.addEventListener('change',sync);
+ fine.addEventListener('change',resetPointer);
+ document.addEventListener('visibilitychange',function(){resetPointer();sync()});
+ sync();
+})();
+</script>
+</body>
+</html>

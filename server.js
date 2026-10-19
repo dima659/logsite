@@ -19,18 +19,18 @@ const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const normEmail=v=>{v=S(v,80).toLowerCase();return EMAIL_RE.test(v)?v:null};
 
 /* ---------- почта ---------- */
-const tx=SMTP_HOST?nodemailer.createTransport({host:SMTP_HOST,port:+SMTP_PORT,secure:+SMTP_PORT===465,auth:{user:SMTP_USER,pass:SMTP_PASS}}):null;
-const mail=(to,subject,text)=>tx?tx.sendMail({from:MAIL_FROM||SMTP_USER,to,subject,text}):Promise.resolve(console.log(`\n[ПИСЬМО → ${to}] ${subject}\n${text}\n`));
+const tx=SMTP_HOST&&process.env.RENDER!=='true'?nodemailer.createTransport({host:SMTP_HOST,port:+SMTP_PORT,secure:+SMTP_PORT===465,auth:{user:SMTP_USER,pass:SMTP_PASS},connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000}):null;
+const mail=(to,subject,text)=>tx?tx.sendMail({from:MAIL_FROM||SMTP_USER,to,subject,text}):Promise.resolve();
 const bg=p=>p.catch(e=>console.error('Ошибка отправки письма:',e.message));
 
 /* ---------- сессии ---------- */
-const sign=e=>{const p=Buffer.from(JSON.stringify({e,x:Date.now()+30*864e5})).toString('base64url');return p+'.'+hmac(p)};
+const sign=e=>{const p=Buffer.from(JSON.stringify({e,x:Date.now()+30*864e5,v:2,a:users()[e]?.authVersion})).toString('base64url');return p+'.'+hmac(p)};
 function me(req){
   const m=(req.headers.cookie||'').match(/(?:^|; )lc=([^;]+)/);if(!m)return null;
   const [p,s]=m[1].split('.');if(!p||!s)return null;
   const a=Buffer.from(hmac(p)),b=Buffer.from(s);
   if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return null;
-  try{const j=JSON.parse(Buffer.from(p,'base64url'));return j.x>Date.now()&&typeof j.e==='string'?j.e:null}catch{return null}
+  try{const j=JSON.parse(Buffer.from(p,'base64url'));const u=typeof j.e==='string'?users()[j.e]:null;return j.x>Date.now()&&j.v===2&&u&&u.passwordHash&&u.authVersion===j.a?j.e:null}catch{return null}
 }
 const users=()=>J('users.json',{});
 const cur=req=>{const e=me(req);return e?users()[e]||null:null};
@@ -38,8 +38,61 @@ const isAdmin=req=>{const u=cur(req);return !!u&&u.email===ADMIN};
 const need=(req,res,next)=>isAdmin(req)?next():res.status(401).json({error:'auth'});
 const logged=(req,res,next)=>cur(req)?next():res.status(401).json({error:'auth'});
 const pubUser=u=>({email:u.email,name:u.name,phone:u.phone,city:u.city,address:u.address,notify:u.notify!==false});
-const codes=new Map(),hits=new Map();
+const hits=new Map();
 function limited(k,n,ms){const t=Date.now(),a=(hits.get(k)||[]).filter(x=>t-x<ms);a.push(t);hits.set(k,a);return a.length>n}
+
+/* ---------- пароли: scrypt, уникальная соль, без открытых паролей ---------- */
+const ADMIN_PASSWORD=process.env.ADMIN_PASSWORD||'';
+const passwordOK=p=>typeof p==='string'&&p.length>=10&&p.length<=128;
+const derivePassword=(password,salt)=>new Promise((resolve,reject)=>{
+  crypto.scrypt(password,salt,64,{N:16384,r:8,p:1,maxmem:64*1024*1024},(err,key)=>err?reject(err):resolve(key));
+});
+async function hashPassword(password){
+  const salt=crypto.randomBytes(16).toString('hex');
+  return 'scrypt$'+salt+'$'+(await derivePassword(password,salt)).toString('hex');
+}
+async function checkPassword(password,stored){
+  const parts=typeof stored==='string'?stored.split('$'):[];
+  const valid=parts.length===3&&parts[0]==='scrypt'&&/^[a-f0-9]{32}$/.test(parts[1])&&/^[a-f0-9]{128}$/.test(parts[2]);
+  // Unknown accounts incur the same scrypt work as known accounts.
+  const key=await derivePassword(password,valid?parts[1]:'00000000000000000000000000000000');
+  return valid&&crypto.timingSafeEqual(key,Buffer.from(parts[2],'hex'));
+}
+function setLoginCookie(req,res,email){
+  const secure=NODE_ENV==='production'||req.secure;
+  res.append('Set-Cookie',`lc=${sign(email)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`);
+}
+// Best-effort device labels, not hardware fingerprinting or online-status tracking.
+function deviceLabel(req){
+  const ua=String(req.get('user-agent')||'').slice(0,1024);
+  const tablet=/iPad|Tablet/i.test(ua)||(/Macintosh/i.test(ua)&&/Mobile/i.test(ua));
+  const type=tablet?'Планшет':/Mobi|Android|iPhone/i.test(ua)?'Телефон':ua?'Компьютер':'Не определено';
+  const os=/iPhone|iPad|iPod/i.test(ua)||tablet&&/Macintosh/i.test(ua)?'iOS / iPadOS':/Android/i.test(ua)?'Android':/Windows/i.test(ua)?'Windows':/Mac OS|Macintosh/i.test(ua)?'macOS':/CrOS/i.test(ua)?'ChromeOS':/Linux/i.test(ua)?'Linux':'ОС не определена';
+  const browser=/Edg(?:e|A|iOS)?\//i.test(ua)?'Edge':/OPR\/|Opera|OPiOS/i.test(ua)?'Opera':/SamsungBrowser/i.test(ua)?'Samsung Internet':/Firefox\/|FxiOS\//i.test(ua)?'Firefox':/Chrome\/|CriOS\//i.test(ua)?'Chrome':/Safari\//i.test(ua)?'Safari':'Браузер не определён';
+  return {type,os,browser};
+}
+function recordDeviceLogin(req,res,email){
+  const match=(req.headers.cookie||'').match(/(?:^|;\s*)lc_device=([a-f0-9]{48})(?:;|$)/);
+  const token=match?match[1]:crypto.randomBytes(24).toString('hex');
+  const key=hmac('device:'+token),all=users(),u=all[email];
+  if(!u)throw new Error('Account not found while recording successful login.');
+  const now=new Date().toISOString(),devices=Array.isArray(u.devices)?u.devices:[],previous=devices.find(d=>d.key===key);
+  u.devices=[{key,...deviceLabel(req),firstLoginAt:previous?.firstLoginAt||now,lastLoginAt:now,loginCount:(Number(previous?.loginCount)||0)+1},...devices.filter(d=>d.key!==key)].slice(0,10);
+  u.lastLoginAt=now;W('users.json',all);
+  res.append('Set-Cookie',`lc_device=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=15552000${NODE_ENV==='production'||req.secure?'; Secure':''}`);
+}
+async function ensureAdminPassword(){
+  if(!ADMIN_PASSWORD){
+    if(!users()[ADMIN]?.passwordHash)console.warn('Для входа администратора добавьте ADMIN_PASSWORD (от 10 до 128 символов) в Render Environment.');
+    return;
+  }
+  if(!passwordOK(ADMIN_PASSWORD))throw new Error('ADMIN_PASSWORD должен содержать от 10 до 128 символов.');
+  let current=users()[ADMIN];
+  if(current&&await checkPassword(ADMIN_PASSWORD,current.passwordHash))return;
+  const passwordHash=await hashPassword(ADMIN_PASSWORD),all=users();
+  all[ADMIN]={email:ADMIN,name:'Администратор',phone:'',city:'',address:'',notify:false,created:new Date().toISOString(),cart:[],fav:[],...all[ADMIN],passwordHash,authVersion:crypto.randomBytes(16).toString('hex')};
+  W('users.json',all);
+}
 
 /* ---------- данные ---------- */
 const prods=()=>J('products.json',[]).map(p=>({sub:CATS[p.cat]?'':p.cat||'',desc:'',sizes:[],hidden:false,created:'2026-01-01T00:00:00.000Z',...p,
@@ -80,31 +133,34 @@ app.use('/api',(req,res,next)=>{
 });
 app.use('/api',express.json({limit:'200kb'}));
 
-/* вход / регистрация по коду на почту (Gmail, Яндекс, Mail.ru и любая другая) */
-app.post('/api/login',async(req,res)=>{
-  const id=normEmail((req.body||{}).email);
-  if(!id)return res.status(400).json({error:'Введите корректную почту'});
-  if(limited('l'+req.ip,10,3600e3))return res.status(429).json({error:'Слишком много попыток, попробуйте позже'});
-  const old=codes.get(id);if(old&&Date.now()-old.t<60e3)return res.status(429).json({error:'Код уже отправлен. Подождите минуту.'});
-  const code=String(crypto.randomInt(0,1e6)).padStart(6,'0');
-  codes.set(id,{h:hmac(code),x:Date.now()+600e3,t:Date.now(),n:0});
-  try{await mail(id,'Код входа Logistic Center',`Ваш код: ${code}\nОн действует 10 минут. Если вы не запрашивали вход — проигнорируйте письмо.`);res.json({ok:true,dev:!tx})}
-  catch(e){codes.delete(id);console.error('Ошибка отправки письма:',e.message);res.status(500).json({error:'Не удалось отправить письмо. Проверьте адрес или попробуйте позже.'})}
+/* Вход по паролю. Отправка писем и одноразовые коды не используются. */
+app.post('/api/register',async(req,res,next)=>{
+  try{
+    const b=req.body||{},email=normEmail(b.email),password=b.password;
+    if(limited('register:'+req.ip,12,3600e3))return res.status(429).json({error:'Слишком много регистраций. Попробуйте позже.'});
+    if(!email)return res.status(400).json({error:'Введите корректную почту.'});
+    if(!passwordOK(password))return res.status(400).json({error:'Пароль должен содержать от 10 до 128 символов.'});
+    if(email===ADMIN)return res.status(403).json({error:'Это адрес администратора. Используйте вкладку «Вход» и пароль из настроек сервера.'});
+    if(users()[email])return res.status(409).json({error:'Этот аккаунт уже существует. Используйте вкладку «Вход». Если раньше входили по коду, обратитесь к администратору для установки пароля.'});
+    const passwordHash=await hashPassword(password),all=users();
+    if(all[email])return res.status(409).json({error:'Этот аккаунт уже существует. Войдите в него.'});
+    all[email]={email,name:S(b.name,40),phone:'',city:'',address:'',notify:false,created:new Date().toISOString(),cart:[],fav:[],passwordHash,authVersion:crypto.randomBytes(16).toString('hex')};
+    W('users.json',all);recordDeviceLogin(req,res,email);setLoginCookie(req,res,email);res.json({ok:true});
+  }catch(e){next(e)}
 });
-app.post('/api/verify',(req,res)=>{
-  if(limited('v'+req.ip,20,3600e3))return res.status(429).json({error:'Слишком много попыток, попробуйте позже'});
-  const b=req.body||{},email=normEmail(b.email),code=S(String(b.code||''),6),c=codes.get(email);
-  if(!c||c.x<Date.now()||c.n>=5){codes.delete(email);return res.status(400).json({error:'Код недействителен. Запросите новый.'})}
-  c.n++;
-  if(!crypto.timingSafeEqual(Buffer.from(hmac(code)),Buffer.from(c.h)))return res.status(400).json({error:'Неверный код'});
-  codes.delete(email);
-  const all=users();let u=all[email];
-  if(!u)u=all[email]={email,name:S(b.name,40),phone:'',city:'',address:'',notify:true,created:new Date().toISOString(),cart:[],fav:[]};
-  else if(!u.name&&b.name)u.name=S(b.name,40);
-  W('users.json',all);
-  res.set('Set-Cookie',`lc=${sign(email)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${NODE_ENV==='production'?'; Secure':''}`);
-  res.json({ok:true});
+app.post('/api/login',async(req,res,next)=>{
+  try{
+    const b=req.body||{},email=normEmail(b.email),password=b.password;
+    if(limited('login-ip:'+req.ip,40,15*60e3)||limited('login-account:'+req.ip+':'+email,12,15*60e3))return res.status(429).json({error:'Слишком много попыток. Попробуйте через 15 минут.'});
+    if(!email||typeof password!=='string'||!password.length||password.length>128)return res.status(400).json({error:'Введите почту и пароль.'});
+    const u=users()[email];
+    const correct=await checkPassword(password,u?.passwordHash);
+    if(!u||!correct)return res.status(401).json({error:'Неверная почта или пароль. Если раньше входили по коду, пароль необходимо установить отдельно.'});
+    recordDeviceLogin(req,res,email);setLoginCookie(req,res,email);res.json({ok:true});
+  }catch(e){next(e)}
 });
+// Retire the old OTP endpoint so stale pages cannot bypass password authentication.
+app.post('/api/verify',(req,res)=>res.status(410).json({error:'Вход по коду отключён. Обновите страницу и войдите по паролю.'}));
 app.post('/api/logout',(req,res)=>{res.set('Set-Cookie','lc=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');res.json({ok:true})});
 
 /* профиль */
@@ -127,6 +183,23 @@ app.get('/api/state',logged,(req,res)=>{const u=cur(req);res.json({cart:u.cart||
 app.put('/api/state',logged,(req,res)=>{
   const all=users(),u=all[me(req)],b=req.body||{};
   u.cart=cleanCart(b.cart);u.fav=cleanFav(b.fav);W('users.json',all);res.json({ok:true});
+});
+
+/* Registered accounts and login devices: visible only to the administrator. */
+app.get('/api/admin/users',need,(req,res)=>{
+  const q=S(req.query.q,120).toLowerCase(),pageSize=20;
+  let list=Object.values(users()).filter(u=>u&&typeof u.email==='string');
+  if(q)list=list.filter(u=>(u.email+' '+(u.name||'')).toLowerCase().includes(q));
+  list.sort((a,b)=>String(b.created||'').localeCompare(String(a.created||'')));
+  const total=list.length,pages=Math.max(1,Math.ceil(total/pageSize));
+  const page=Math.min(pages,Math.max(1,parseInt(req.query.page,10)||1));
+  res.json({total,page,pages,pageSize,users:list.slice((page-1)*pageSize,page*pageSize).map(u=>({
+    email:u.email,name:u.name||'',created:u.created||null,lastLoginAt:u.lastLoginAt||null,isAdmin:u.email===ADMIN,
+    devices:(Array.isArray(u.devices)?u.devices:[]).slice(0,10).map(d=>({
+      type:d.type||'Не определено',os:d.os||'ОС не определена',browser:d.browser||'Браузер не определён',
+      firstLoginAt:d.firstLoginAt||null,lastLoginAt:d.lastLoginAt||null,loginCount:Number(d.loginCount)||1
+    }))
+  }))});
 });
 
 /* настройки сайта (контакты) */
@@ -224,4 +297,4 @@ app.use((err, req, res, next) => {
       : 'Ошибка сервера'
   });
 });
-app.listen(PORT,()=>console.log(`Сайт: http://localhost:${PORT}  (админ: ${ADMIN})${tx?'':'  [SMTP не настроен — коды входа печатаются здесь]'}`));
+ensureAdminPassword().then(()=>{app.listen(PORT,()=>console.log(`Сайт запущен на порту ${PORT}. Вход по почте и паролю; письма для входа не используются.`))}).catch(err=>{console.error('Ошибка запуска:',err.message);process.exit(1)});
